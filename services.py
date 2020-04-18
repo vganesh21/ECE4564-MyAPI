@@ -4,6 +4,7 @@ import argparse
 import time
 import requests
 import hashlib
+import json
 from flask import Flask, jsonify, request, abort
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -43,10 +44,6 @@ def verify_password(username, password):
 def index():
     return "Hello, %s!" % auth.username()
 
-@app.route('/todo/api/v1.0/tasks', methods=['GET'])
-def get_tasks():
-    return jsonify({'tasks': tasks})
-
 @app.route('/Marvel', methods=['GET'])
 @auth.login_required
 def get_marvel():
@@ -77,10 +74,11 @@ def get_canvas():
     url = "https://vt.instructure.com/api/v1/courses/%s/files/?search_term=%s&access_token=%s" % (course_id, filename, canvas_api)
     file = requests.get(url)
     data = jsonify(file.json())
-    file_name = filename.split(".")[0] + ".txt"
-    f= open(file_name,"w+")
-    f.write(data.get_data(as_text=True))
-    f.close()
+    decodeddata = json.loads(file.text)
+    dats = decodeddata[0]
+    stad = dats["url"]
+    data2 = requests.get(stad, allow_redirects=True)
+    open(filename, 'wb').write(data2.content)
     return data
 
 if __name__ == '__main__':
